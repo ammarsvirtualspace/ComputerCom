@@ -1,10 +1,848 @@
 <!DOCTYPE html>
-<html>
+<html lang="sv">
 <head>
-    <title>Computer Com Exam Bot</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EITA60 – Sant/Falskt Övning</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+:root {
+  --bg:#0d0f14; --surface:#161920; --surface2:#1e2230; --surface3:#242840;
+  --border:#2a2f3f; --border2:#353d55;
+  --accent:#4fc3f7; --accent2:#81c784; --purple:#ce93d8;
+  --red:#ef5350; --yellow:#ffca28; --orange:#ffa726;
+  --text:#e8eaf0; --muted:#8892a4; --muted2:#5a6275;
+  --correct-bg:#1b2e1e; --correct-border:#4caf50;
+  --wrong-bg:#2e1b1b; --wrong-border:#ef5350;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;min-height:100vh;}
+
+/* ── NAV ── */
+.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;gap:0;position:sticky;top:0;z-index:100;}
+.nav-logo{font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:var(--accent);letter-spacing:0.1em;padding:1rem 1.2rem 1rem 0;border-right:1px solid var(--border);margin-right:0.5rem;white-space:nowrap;}
+.nav-tabs{display:flex;gap:0;overflow-x:auto;}
+.nav-tab{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;letter-spacing:0.06em;padding:1rem 1rem;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.15s;border-top:none;border-left:none;border-right:none;background:none;}
+.nav-tab:hover{color:var(--text);}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.nav-tab.history-tab{color:var(--purple);}
+.nav-tab.history-tab.active{color:var(--purple);border-bottom-color:var(--purple);}
+
+/* ── PAGES ── */
+.page{display:none;padding:2rem 1rem 5rem;}
+.page.active{display:block;}
+
+/* ── HOME ── */
+.home-header{max-width:800px;margin:0 auto 2.5rem;padding:2rem 0 0;}
+.home-header h1{font-size:2rem;font-weight:700;margin-bottom:0.5rem;}
+.home-header p{color:var(--muted);font-size:0.95rem;line-height:1.6;}
+.cards-grid{max-width:800px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;}
+.mode-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.4rem;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;}
+.mode-card:hover{border-color:var(--border2);background:var(--surface2);transform:translateY(-1px);}
+.mode-card .card-year{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.6rem;}
+.mode-card .card-title{font-size:1rem;font-weight:600;margin-bottom:0.35rem;}
+.mode-card .card-sub{font-size:0.78rem;color:var(--muted);line-height:1.4;}
+.mode-card .card-badge{position:absolute;top:1rem;right:1rem;font-family:'IBM Plex Mono',monospace;font-size:0.65rem;padding:0.2rem 0.5rem;border-radius:3px;}
+.mode-card.year-card .card-year{color:var(--accent);}
+.mode-card.year-card .card-badge{background:#0d2035;color:var(--accent);border:1px solid var(--accent);}
+.mode-card.practice-card{border-color:var(--purple);background:#1a1520;}
+.mode-card.practice-card .card-year{color:var(--purple);}
+.mode-card.practice-card .card-badge{background:#1e1030;color:var(--purple);border:1px solid var(--purple);}
+.mode-card.practice-card:hover{border-color:var(--purple);background:#1e1830;}
+.section-label{max-width:800px;margin:0 auto 0.8rem;font-family:'IBM Plex Mono',monospace;font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted2);}
+
+/* ── QUIZ LAYOUT ── */
+.quiz-wrap{max-width:760px;margin:0 auto;}
+.quiz-header{margin-bottom:1.5rem;padding-top:0.5rem;}
+.quiz-header .back-btn{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:0.4rem;margin-bottom:1rem;background:none;border:none;padding:0;}
+.quiz-header .back-btn:hover{color:var(--accent);}
+.quiz-header h2{font-size:1.3rem;font-weight:700;margin-bottom:0.3rem;}
+.quiz-header .quiz-sub{font-size:0.83rem;color:var(--muted);}
+
+.meta-bar{display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:1.5rem;}
+.meta-badge{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;padding:0.28rem 0.65rem;border-radius:3px;border:1px solid var(--border);color:var(--muted);}
+.meta-badge.hi{border-color:var(--accent);color:var(--accent);}
+
+.scoring-rule{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--yellow);padding:0.8rem 1.1rem;border-radius:4px;font-size:0.8rem;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:1.5rem;}
+.scoring-rule span{color:var(--yellow);font-weight:600;}
+
+.progress-bar-wrap{height:3px;background:var(--surface2);border-radius:2px;overflow:hidden;margin-bottom:1.8rem;}
+.progress-bar-fill{height:100%;background:var(--accent);width:0%;transition:width 0.3s ease;}
+
+.section-divider{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);padding-bottom:0.4rem;border-bottom:1px solid var(--border);margin:0 0 1rem;}
+
+.q-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1.2rem 1.4rem;margin-bottom:1rem;transition:border-color 0.2s,background 0.2s;}
+.q-card.correct{background:var(--correct-bg);border-color:var(--correct-border);}
+.q-card.wrong{background:var(--wrong-bg);border-color:var(--wrong-border);}
+.q-card.skipped{border-color:var(--yellow);background:#1e1d14;}
+.q-num{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:0.5rem;letter-spacing:0.08em;}
+.q-text{font-size:0.96rem;line-height:1.55;margin-bottom:1rem;}
+
+.btn-group{display:flex;gap:0.6rem;}
+.tf-btn{flex:1;padding:0.52rem 1rem;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.8rem;font-weight:600;cursor:pointer;transition:all 0.15s;letter-spacing:0.04em;}
+.tf-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent);background:#141b25;}
+.tf-btn.sel-sant{background:#0d2035;border-color:var(--accent);color:var(--accent);}
+.tf-btn.sel-falskt{background:#2a1020;border-color:var(--purple);color:var(--purple);}
+.tf-btn:disabled{cursor:default;opacity:0.7;}
+
+.feedback{margin-top:0.8rem;padding:0.55rem 0.85rem;border-radius:4px;font-size:0.8rem;font-family:'IBM Plex Mono',monospace;line-height:1.5;display:none;}
+.feedback.show{display:block;}
+.feedback.fb-correct{background:#112215;border:1px solid #4caf50;color:var(--accent2);}
+.feedback.fb-wrong{background:#1f0f0f;border:1px solid var(--red);color:#ef9a9a;}
+.feedback.fb-skipped{background:#1a1800;border:1px solid var(--yellow);color:var(--yellow);}
+
+.submit-area{text-align:center;margin:2.5rem 0 0;}
+.submit-btn{background:var(--accent);color:#000;border:none;padding:0.82rem 3rem;font-family:'IBM Plex Mono',monospace;font-size:0.88rem;font-weight:600;letter-spacing:0.08em;border-radius:4px;cursor:pointer;text-transform:uppercase;transition:opacity 0.2s;}
+.submit-btn:hover{opacity:0.85;}
+.submit-btn:disabled{opacity:0.4;cursor:default;}
+
+/* ── RESULT PANEL ── */
+.result-panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:2rem;margin:2.5rem 0 0;display:none;text-align:center;}
+.result-panel.show{display:block;}
+.score-lbl{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;letter-spacing:0.15em;color:var(--muted);text-transform:uppercase;margin-bottom:0.4rem;}
+.score-num{font-size:3.8rem;font-weight:700;font-family:'IBM Plex Mono',monospace;line-height:1;margin-bottom:0.3rem;}
+.score-num.good{color:var(--accent2);}
+.score-num.ok{color:var(--yellow);}
+.score-num.bad{color:var(--red);}
+.score-sub{color:var(--muted);font-size:0.85rem;margin-bottom:1.5rem;}
+.tally-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.7rem;margin:1rem 0 1.4rem;}
+.tally-item{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:0.75rem 0.5rem;}
+.tally-item .tv{font-family:'IBM Plex Mono',monospace;font-size:1.5rem;font-weight:600;}
+.tally-item .tl{font-size:0.7rem;color:var(--muted);margin-top:0.2rem;}
+.tally-correct .tv{color:var(--accent2);}
+.tally-wrong .tv{color:var(--red);}
+.tally-skip .tv{color:var(--yellow);}
+.result-msg{font-size:0.88rem;color:var(--muted);font-style:italic;margin-bottom:1.4rem;line-height:1.5;}
+.result-btns{display:flex;gap:0.7rem;justify-content:center;flex-wrap:wrap;}
+.r-btn{background:transparent;border:1px solid var(--accent);color:var(--accent);padding:0.6rem 1.6rem;font-family:'IBM Plex Mono',monospace;font-size:0.8rem;letter-spacing:0.05em;border-radius:4px;cursor:pointer;transition:all 0.15s;}
+.r-btn:hover{background:#0d2035;}
+.r-btn.sec{border-color:var(--border);color:var(--muted);}
+.r-btn.sec:hover{border-color:var(--muted);background:var(--surface2);}
+
+/* ── HISTORY PAGE ── */
+.history-wrap{max-width:800px;margin:0 auto;padding-top:0.5rem;}
+.history-header{margin-bottom:2rem;}
+.history-header h2{font-size:1.3rem;font-weight:700;margin-bottom:0.3rem;}
+.history-header p{color:var(--muted);font-size:0.85rem;}
+.history-empty{text-align:center;padding:4rem 2rem;color:var(--muted);font-size:0.9rem;}
+.history-empty .big{font-size:2.5rem;margin-bottom:0.8rem;opacity:0.3;}
+.hist-filters{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem;}
+.hist-filter{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;padding:0.28rem 0.7rem;border-radius:3px;border:1px solid var(--border);color:var(--muted);cursor:pointer;background:none;transition:all 0.15s;}
+.hist-filter:hover,.hist-filter.active{border-color:var(--purple);color:var(--purple);background:#1a1030;}
+.hist-entry{background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:0.8rem;overflow:hidden;}
+.hist-entry-header{padding:1rem 1.2rem;cursor:pointer;display:flex;align-items:center;gap:1rem;transition:background 0.15s;}
+.hist-entry-header:hover{background:var(--surface2);}
+.hist-score-pill{font-family:'IBM Plex Mono',monospace;font-size:0.85rem;font-weight:600;padding:0.25rem 0.7rem;border-radius:4px;min-width:60px;text-align:center;}
+.pill-good{background:#1b2e1e;color:var(--accent2);border:1px solid var(--correct-border);}
+.pill-ok{background:#2a2200;color:var(--yellow);border:1px solid var(--yellow);}
+.pill-bad{background:var(--wrong-bg);color:#ef9a9a;border:1px solid var(--wrong-border);}
+.hist-meta{flex:1;}
+.hist-mode{font-size:0.85rem;font-weight:600;}
+.hist-date{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--muted);margin-top:0.15rem;}
+.hist-tally{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--muted);margin-left:auto;}
+.hist-tally .t-ok{color:var(--accent2);}
+.hist-tally .t-no{color:var(--red);}
+.hist-chevron{color:var(--muted);font-size:0.8rem;transition:transform 0.2s;}
+.hist-entry.open .hist-chevron{transform:rotate(180deg);}
+.hist-detail{display:none;border-top:1px solid var(--border);padding:1rem 1.2rem;}
+.hist-entry.open .hist-detail{display:block;}
+.hist-q-row{display:flex;gap:0.6rem;align-items:flex-start;padding:0.45rem 0;border-bottom:1px solid var(--border);font-size:0.8rem;line-height:1.45;}
+.hist-q-row:last-child{border-bottom:none;}
+.hist-q-icon{font-size:0.75rem;min-width:1.2rem;margin-top:0.1rem;}
+.hist-q-text{flex:1;color:var(--muted);}
+.hist-q-ans{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;min-width:50px;text-align:right;}
+.ans-ok{color:var(--accent2);}
+.ans-no{color:var(--red);}
+.ans-skip{color:var(--yellow);}
+.clear-hist{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--red);border:1px solid var(--red);background:none;padding:0.35rem 0.9rem;border-radius:3px;cursor:pointer;transition:all 0.15s;margin-left:auto;display:block;}
+.clear-hist:hover{background:#2e1b1b;}
+</style>
 </head>
 <body>
-    <h1>Welcome to the Computer Com Exam Bot</h1>
-    <p>This bot will help you with your Computer Com examinations.</p>
+
+<nav class="nav">
+  <div class="nav-logo">EITA60</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('home')">Hem</button>
+    <button class="nav-tab" id="tab-quiz" onclick="" style="display:none">Quiz</button>
+    <button class="nav-tab history-tab" onclick="showPage('history')">📊 Historik</button>
+  </div>
+</nav>
+
+<!-- ══ HOME PAGE ══ -->
+<div class="page active" id="page-home">
+  <div style="max-width:800px;margin:0 auto;padding:2rem 0 1rem;">
+    <h1 style="font-size:1.8rem;font-weight:700;margin-bottom:0.4rem;">Sant / Falskt – Övningar</h1>
+    <p style="color:var(--muted);font-size:0.9rem;margin-bottom:2.5rem;">Välj ett läge nedan. Poängsättning: <strong style="color:var(--yellow)">+1</strong> rätt · <strong style="color:var(--red)">−1</strong> fel · <strong style="color:var(--muted)">0</strong> ej svar · negativt totalt → 0</p>
+
+    <div class="section-label">Slumpmässig övning</div>
+    <div class="cards-grid" style="margin-bottom:2rem;">
+      <div class="mode-card practice-card" onclick="startPractice()">
+        <div class="card-badge">44 frågor</div>
+        <div class="card-year">Övningsläge</div>
+        <div class="card-title">Slumpmässigt urval</div>
+        <div class="card-sub">20 frågor slumpas varje omgång, balanserat mellan TCP/UDP och Ethernet. Nytt urval varje gång.</div>
+      </div>
+    </div>
+
+    <div class="section-label">Tentamen per år</div>
+    <div class="cards-grid" id="year-cards"></div>
+  </div>
+</div>
+
+<!-- ══ QUIZ PAGE ══ -->
+<div class="page" id="page-quiz">
+  <div class="quiz-wrap">
+    <div class="quiz-header">
+      <button class="back-btn" onclick="showPage('home')">← Tillbaka till hem</button>
+      <h2 id="quiz-title"></h2>
+      <div class="quiz-sub" id="quiz-sub"></div>
+    </div>
+    <div class="meta-bar" id="quiz-meta"></div>
+    <div class="scoring-rule">⚠ Poängsättning: <span>+1</span> rätt · <span>−1</span> fel · <span>0</span> ej svar · negativt totalt → <span>0 poäng</span></div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressBar"></div></div>
+    <div id="quiz-container"></div>
+    <div class="submit-area"><button class="submit-btn" id="submitBtn" onclick="submitQuiz()">Lämna in svar</button></div>
+    <div class="result-panel" id="resultPanel">
+      <div class="score-lbl">Ditt resultat</div>
+      <div class="score-num" id="scoreNum"></div>
+      <div class="score-sub" id="scoreSub"></div>
+      <div class="tally-grid">
+        <div class="tally-item tally-correct"><div class="tv" id="tC">0</div><div class="tl">Rätta</div></div>
+        <div class="tally-item tally-wrong">  <div class="tv" id="tW">0</div><div class="tl">Fel</div></div>
+        <div class="tally-item tally-skip">   <div class="tv" id="tS">0</div><div class="tl">Ej svar</div></div>
+      </div>
+      <div class="result-msg" id="resultMsg"></div>
+      <div class="result-btns" id="resultBtns"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ HISTORY PAGE ══ -->
+<div class="page" id="page-history">
+  <div class="history-wrap">
+    <div class="history-header">
+      <h2>Historik</h2>
+      <p style="color:var(--muted);font-size:0.85rem;">Alla dina inskickade resultat sparas här automatiskt.</p>
+    </div>
+    <div id="history-content"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// DATA — exact questions extracted from PDF text
+// ═══════════════════════════════════════════════════════════════
+
+const YEAR_EXAMS = {
+  2015: {
+    label: "2015 (19 mars)",
+    sections: [
+      {
+        name: "Uppgift 4 – TCP/UDP",
+        penalty: -1,
+        questions: [
+          { t:"UDP-paket har ingen checksumma.", a:false, e:"FALSKT. UDP-headern innehåller en checksumma (4 bytes). Den är valfri i IPv4 men finns alltid i headern." },
+          { t:"En TCP-header har ett fält som anger numret på första byten i paketet.", a:true, e:"SANT. TCP-headern innehåller sequence number som anger numret på den första byten i segmentets data." },
+          { t:"Ett programs portnummer är unikt på internet.", a:false, e:"FALSKT. Portnumret är unikt på den lokala datorn, inte på hela internet. Samma portnummer används av program på olika datorer." },
+          { t:"QUIC använder UDP.", a:true, e:"SANT. QUIC (Quick UDP Internet Connections) körs ovanpå UDP och kombinerar fördelar från TCP och TLS med lägre latens." },
+          { t:"Om en time-out utlöses i TCP så fördubblas congestion window.", a:false, e:"FALSKT. Vid time-out sätts congestion window till 1 MSS och slow start initieras om. Det är inte en fördubbling." },
+          { t:"DNS använder UDP.", a:true, e:"SANT. DNS använder normalt UDP (port 53) för snabba frågor. TCP används bara vid zonöverföringar eller stora svar." },
+          { t:"I ett ACK-paket i UDP anges numret på nästa byte som mottagaren förväntar sig att få.", a:false, e:"FALSKT. UDP har inga ACK-paket. UDP-headern saknar sekvensnummer och bekräftelsefält." },
+          { t:"Värdet på time-out i TCP är 0,5 ms multiplicerat med antal routrar i förbindelsen.", a:false, e:"FALSKT. TCP beräknar timeout dynamiskt baserat på uppmätt RTT: TimeoutInterval = EstimatedRTT + 4×DevRTT. Inget fast formel med antal routrar används." },
+          { t:"TCP och UDP tillhör nätverkslagret.", a:false, e:"FALSKT. TCP och UDP tillhör transportlagret (lager 4). Nätverkslagret innehåller IP-protokollet." },
+          { t:"Checksumman i TCP-headern måste räknas om varje gång ett paket passerar en router.", a:false, e:"FALSKT. TCP-checksumman räknas INTE om i routrar. Det är IP-headerns checksumma som räknas om i varje router (pga. TTL-minskning)." },
+        ]
+      },
+      {
+        name: "Uppgift 5 – Ethernet/länklagret",
+        penalty: -1,
+        questions: [
+          { t:"En paritetsbit upptäcker alltid ett udda antal bitfel i ett paket.", a:true, e:"SANT. En paritetsbit kan alltid detektera ett udda antal bitfel (1, 3, 5,...) men missar ett jämnt antal där pariteten råkar stämma." },
+          { t:"Ethernet använder token ring.", a:false, e:"FALSKT. Ethernet använder CSMA/CD som åtkomstmetod. Token ring är ett separat protokoll som använder ett cirkulerande token." },
+          { t:"Ethernet använder CRC för att kolla att mottagna paket är korrekta.", a:true, e:"SANT. Ethernet använder CRC-32 (Cyclic Redundancy Check) i ramens trailer för feldetektering." },
+          { t:"En dator kan bara ha en MAC-adress.", a:false, e:"FALSKT. En dator med flera nätverksgränssnitt (t.ex. trådanslutet + trådlöst) har en unik MAC-adress per gränssnitt." },
+          { t:"En DHCP-server delar ut MAC-adresser till datorerna på ett subnät.", a:false, e:"FALSKT. DHCP-servern delar ut IP-adresser, inte MAC-adresser. MAC-adresser är hårdkodade i nätverkskortet av tillverkaren." },
+          { t:"I slotted aloha får en sändare börja sända när som helst.", a:false, e:"FALSKT. I slotted aloha måste sändning alltid börja i början av en slot. Det är just detta som definierar slotted aloha – inte pure aloha." },
+          { t:"Om ett IP-paket inte kommer fram till slutdestinationen så sänds det alltid om.", a:false, e:"FALSKT. IP är ett best-effort-protokoll utan garantier. Routrar sänder inte om försvunna paket. Det är TCP:s uppgift att hantera omsändning." },
+          { t:"Ett Ethernet-paket kan vara hur stort som helst.", a:false, e:"FALSKT. Standard Ethernet-ramar har en maxstorlek på 1518 bytes (inklusive header och FCS). Det finns alltid ett övre tak." },
+          { t:"ARP-protokollet kan användas för att hitta Ethernet-adressen för en dator om man känner till dess IP-adress.", a:true, e:"SANT. Det är precis vad ARP gör – översätter IP-adresser till MAC-adresser inom samma subnät via broadcast-förfrågningar." },
+          { t:"Ethernet kontrollerar alltid om kanalen är upptagen innan ett paket sänds.", a:true, e:"SANT. CSMA/CD innebär att noden alltid lyssnar på kanalen (Carrier Sense) innan sändning för att undvika onödiga kollisioner." },
+        ]
+      }
+    ]
+  },
+  2020: {
+    label: "2020 (16 mars)",
+    sections: [
+      {
+        name: "Uppgift 4 – TCP/UDP",
+        penalty: -1,
+        questions: [
+          { t:"UDP-headern innehåller inte en checksumma.", a:false, e:"FALSKT. UDP-headern innehåller en checksumma. Den täcker header, data och ett pseudo-header med IP-adresser." },
+          { t:"Ett TCP-segment innehåller ett fält som anger numret på den sista byten i paketet.", a:false, e:"FALSKT. TCP-headern innehåller ett sequence number som anger numret på den FÖRSTA byten i segmentet, inte den sista." },
+          { t:"Ett program som kommunicerar över internet har ett portnummer som är unikt på internet.", a:false, e:"FALSKT. Portnumret är unikt på den lokala datorn (inte på internet). Samma portnummer kan användas av program på olika datorer." },
+          { t:"TCP-segment är alltid längre än UDP-segment.", a:false, e:"FALSKT. TCP-headern är visserligen minst 20 bytes (mot UDP:s 8 bytes), men paketstorlek beror på data. Ett TCP-paket utan data kan vara kortare än ett stort UDP-paket." },
+          { t:"Om en time-out utlöses i TCP så minskas congestion window.", a:true, e:"SANT. Vid time-out sätts congestion window till 1 MSS (minskas drastiskt) och slow start initieras om från början." },
+          { t:"DNS använder UDP.", a:true, e:"SANT. DNS använder normalt UDP (port 53) för snabba frågor. TCP används bara vid zonöverföringar eller när svaret är för stort." },
+          { t:"I ett ACK-paket i TCP anges numret på nästa byte som mottagaren vill ha.", a:true, e:"SANT. TCP:s ACK-nummer är kumulativt och anger numret på nästa förväntade byte, vilket bekräftar alla bytes före det numret." },
+          { t:"Värdet på time-out i en TCP-förbindelse baseras på mätningar av round-trip-time.", a:true, e:"SANT. TCP mäter RTT löpande och beräknar timeout som EstimatedRTT + 4×DevRTT, en adaptiv mekanism." },
+          { t:"TCP och UDP är tillhör länklagret.", a:false, e:"FALSKT. TCP och UDP tillhör transportlagret (lager 4), inte länklagret (lager 2 där t.ex. Ethernet finns)." },
+          { t:"TCP använder kumulativa ACK.", a:true, e:"SANT. TCP:s ACK-nummer bekräftar kumulativt alla bytes upp till (men inte inklusive) det angivna numret." },
+        ]
+      },
+      {
+        name: "Uppgift 5 – Ethernet/länklagret",
+        penalty: -1,
+        questions: [
+          { t:"En paritetsbit upptäcker alltid ett udda antal bitfel.", a:true, e:"SANT. En paritetsbit detekterar alltid ett udda antal bitfel (1, 3, 5,...) men missar ett jämnt antal (2, 4,...) där pariteten råkar stämma." },
+          { t:"Ethernet använder slotted aloha.", a:false, e:"FALSKT. Ethernet använder CSMA/CD (Carrier Sense Multiple Access with Collision Detection), inte slotted aloha." },
+          { t:"Ethernet kontrollerar om en mottagen ram är korrekt.", a:true, e:"SANT. Ethernet använder CRC-32 i ramens trailer för att detektera bitfel. Felaktiga ramar kastas tyst." },
+          { t:"En dator kan ha flera MAC-adresser.", a:true, e:"SANT. En dator med flera nätverksgränssnitt har en unik MAC-adress per gränssnitt." },
+          { t:"En ARP-server delar ut MAC-adresser till datorerna på ett subnät.", a:false, e:"FALSKT. Det finns ingen 'ARP-server'. ARP är ett distribuerat protokoll – en dator skickar broadcast-förfrågan och den sökta datorn svarar direkt med sin MAC-adress." },
+          { t:"I token ring får en sändare börja sända när den har fått ett \"token\".", a:true, e:"SANT. I Token Ring cirkulerar ett token i ringen och en nod måste fånga token innan den får sända." },
+          { t:"Ethernetramarna innehåller inte sändarens MAC-adress.", a:false, e:"FALSKT. Varje Ethernet-ram innehåller ett source address-fält med sändarens MAC-adress, samt ett destination address-fält." },
+          { t:"En Ethernetram kan vara hur stor som helst.", a:false, e:"FALSKT. Standard Ethernet-ramar har en maxstorlek på 1518 bytes. Det finns alltid ett övre tak." },
+          { t:"ARP-protokollet kan användas för att hitta Ethernetadressen till en dator på samma subnät om man har datorns IP-adress.", a:true, e:"SANT. Det är exakt vad ARP gör – det översätter en IP-adress till en MAC-adress inom samma subnät." },
+          { t:"Om Ethernet används så kontrollerar alltid en dator om någon annan använder kanalen innan den börjar sända en ram.", a:true, e:"SANT. CSMA/CD innebär Carrier Sense – noden lyssnar alltid på kanalen innan sändning." },
+        ]
+      }
+    ]
+  },
+  2021: {
+    label: "2021 (15 mars)",
+    sections: [
+      {
+        name: "Uppgift 5 – Blandade påståenden",
+        penalty: -0.5,
+        questions: [
+          { t:"En paritetsbit upptäcker alltid om exakt tre bitar har ändrats i ett paket.", a:true, e:"SANT. Tre är ett udda tal, och en paritetsbit detekterar alltid ett udda antal bitfel." },
+          { t:"En paritetsbit upptäcker aldrig om exakt två bitar har ändrats i ett paket.", a:true, e:"SANT. Två är ett jämnt tal. Om exakt två bitar ändras förblir pariteten densamma – felet är oupptäckt." },
+          { t:"Checksumman som används i TCP upptäcker alltid att två bitar är fel i ett paket.", a:false, e:"FALSKT. TCP:s checksumma (one's complement) kan missa fel om de tar ut varandra. Den garanterar inte att alla tvåbitarsfel hittas." },
+          { t:"Antalet datorer som maximalt kan finnas i ett subnät är alltid ett jämnt tal.", a:true, e:"SANT. Antalet användbara hostar = 2ⁿ − 2 (nätadress + broadcast reserveras). 2ⁿ − 2 är alltid jämnt för n ≥ 1." },
+          { t:"Om Slotted Aloha används så kommer ett paket alltid fram inom tre sekunder.", a:false, e:"FALSKT. I slotted aloha kan kollisioner ske upprepade gånger. Det finns ingen garanti för att ett paket kommer fram inom någon specifik tid." },
+          { t:"Om dator A och B på ett Token ring-nät vardera har tio paket att sända och de andra datorerna på nätet inte har några paket att sända så kommer A och B att sända vartannat paket.", a:true, e:"SANT. Token skickas runt i ringen. När bara A och B har data att sända får de token varannan gång och sänder vartannat paket." },
+          { t:"Om CSMA används, så kan man vara säker på att två sändare inte stör varandra.", a:false, e:"FALSKT. CSMA lyssnar på kanalen men kan inte garantera kollisionsfrihet pga. propagationsfördröjning – två noder kan båda uppfatta kanalen som ledig och börja sända samtidigt." },
+          { t:"En dators nätverkskort får sin Ethernetadress från en server när datorn ansluts till ett subnät.", a:false, e:"FALSKT. MAC-adressen är hårdkodad i nätverkskortet av tillverkaren. Den tilldelas inte dynamiskt av en server." },
+          { t:"Ethernet kontrollerar inte om ett mottaget paket är korrekt eller inte.", a:false, e:"FALSKT. Ethernet använder CRC-32 för att kontrollera om en mottagen ram är korrekt. Felaktiga ramar kastas." },
+          { t:"Aloha används av Token Ring.", a:false, e:"FALSKT. Token Ring använder ett token-baserat åtkomstprotokoll. Aloha är ett helt annat protokoll." },
+          { t:"UDP ser till att data som inte har kommit fram till mottagaren inom en viss tid sänds om.", a:false, e:"FALSKT. UDP erbjuder ingen tillförlitlighet och ingen omsändningsmekanism. Det är TCP som hanterar omsändning." },
+          { t:"Det finns en TCP-förbindelse mellan en server och en klient. Om servern får ett ACK-paket med ACK-nummer = 127 så tolkar servern det som att klienten har fått minst alla bytes till och med byte nummer 126.", a:true, e:"SANT. ACK-nummer 127 innebär att nästa förväntade byte är 127, vilket bekräftar att alla bytes 1–126 är korrekt mottagna." },
+          { t:"Om en server får ett ACK-paket från en klient där Receive window (fönsterstorlek) = 2369 så får servern inte skicka mer än 2369 bytes till klienten innan den får ett nytt ACK-paket.", a:true, e:"SANT. Receive Window styr flödeskontrollen. Servern får maximalt ha 2369 bytes obekräftad data 'i luften' vid ett givet tillfälle." },
+          { t:"Mottagaren av ett UDP-paket använder en checksumma för att kontrollera att UDP-paketet är korrekt.", a:true, e:"SANT. UDP-mottagaren kan använda checksumman för att verifiera paketets integritet (i IPv4 är det tekniskt valfritt men används praktiskt alltid)." },
+          { t:"En DHCP-server på ett subnät med nätadressen 130.17.64.0/28 kan dela ut 26 IP-adresser i det subnätet.", a:false, e:"FALSKT. /28 ger 2⁴ = 16 adresser totalt, minus 2 (nätadress + broadcast) = 14 användbara adresser, inte 26." },
+        ]
+      }
+    ]
+  },
+  2022: {
+    label: "2022 (14 mars)",
+    sections: [
+      {
+        name: "Uppgift 4 – Ethernet/länklagret",
+        penalty: -1,
+        questions: [
+          { t:"Ethernet använder ett token för att avgöra vem som får sända.", a:false, e:"FALSKT. Det är Token Ring som använder ett token. Ethernet använder CSMA/CD." },
+          { t:"Ett Ethernet-paket innehåller alltid både sändarens och mottagarens Ethernet-adress.", a:true, e:"SANT. Varje Ethernet-ram innehåller ett destination MAC-fält och ett source MAC-fält i headern." },
+          { t:"I slotted aloha så startar alla sändningar precis i början av en slot.", a:true, e:"SANT. Det är definitionen av slotted aloha – alla noder synkroniseras och sändning börjar alltid i början av en slot." },
+          { t:"Ethernet-adresser delas ut av en DHCP-server på ett subnät.", a:false, e:"FALSKT. DHCP delar ut IP-adresser, inte MAC-adresser. MAC-adresser är hårdkodade i nätverkskortet." },
+          { t:"Mottagaren av ett Ethernet-paket kontrollerar alltid att paketet är korrekt och kastar det om det är något fel på det.", a:true, e:"SANT. Ethernet-mottagaren kontrollerar CRC. Om kontrollen misslyckas kastas ramen tyst." },
+          { t:"En mottagare i Ethernet skickar ett NACK-paket (NACK = Negative Acknowledgement) till sändaren om den kastar ett mottaget paket.", a:false, e:"FALSKT. Ethernet skickar inget NACK. Felaktiga ramar kastas tyst utan någon notifiering till sändaren." },
+          { t:"Om bara en sändare i en token ring har ett paket att sända så kan den alltid sända paketet omedelbart.", a:false, e:"FALSKT. I Token Ring måste en nod alltid vänta tills den fått token, även om den är ensam om att ha data." },
+          { t:"Om man har en paritetsbit i ett paket så upptäcks alltid ett udda antal bitfel i paketet.", a:true, e:"SANT. En paritetsbit detekterar alltid ett udda antal bitfel (1, 3, 5,...) men missar ett jämnt antal." },
+          { t:"UDP och Ethernet använder samma slags checksumma.", a:false, e:"FALSKT. UDP använder one's complement-checksumma. Ethernet använder CRC-32. De är helt olika mekanismer." },
+          { t:"Ett Ethernet-paket kan innehålla ett IP-paket.", a:true, e:"SANT. Ethernet-ramen transporterar IP-paket som payload. Det är hur nätverkslagerinkapsling fungerar." },
+        ]
+      },
+      {
+        name: "Uppgift 5 – TCP/UDP",
+        penalty: -1,
+        questions: [
+          { t:"UDP-headern innehåller inte sekvensnummer.", a:true, e:"SANT. UDP-headern saknar sekvensnummer. Den innehåller bara source port, destination port, length och checksum." },
+          { t:"Ett TCP-paket innehåller alltid ett fält som anger numret på den sista byten i paketets data.", a:false, e:"FALSKT. TCP-headern innehåller sequence number som anger numret på den FÖRSTA byten, inte den sista." },
+          { t:"Ett program som kommunicerar över internet har ett portnummer som är unikt på internet.", a:false, e:"FALSKT. Portnumret är unikt på den lokala datorn, inte på internet. Olika datorer kan använda samma portnummer." },
+          { t:"UDP-paket är alltid mindre än TCP-paket.", a:false, e:"FALSKT. UDP-headern (8 bytes) är visserligen mindre än TCP-headern (minst 20 bytes), men ett UDP-paket med stor data kan vara större än ett litet TCP-paket." },
+          { t:"Om en time-out utlöses i TCP så ökar congestion window.", a:false, e:"FALSKT. Vid time-out sätts congestion window till 1 MSS och slow start initieras om. Det är en drastisk MINSKNING, inte ökning." },
+          { t:"DNS använder enbart TCP.", a:false, e:"FALSKT. DNS använder primärt UDP (port 53). TCP används bara vid zonöverföringar eller när svaret är för stort för UDP." },
+          { t:"I ett ACK-paket i UDP anges numret på nästa byte som mottagaren förväntar sig att få.", a:false, e:"FALSKT. UDP har inga ACK-paket. UDP-headern saknar ACK-fält och sekvensnummer helt." },
+          { t:"Värdet på time-out i en TCP-förbindelse är alltid 100 ms.", a:false, e:"FALSKT. TCP beräknar timeout dynamiskt baserat på uppmätt RTT. Det är inte ett fast värde på 100 ms." },
+          { t:"TCP och IP är två protokoll som bägge tillhör nätverkslagret.", a:false, e:"FALSKT. IP tillhör nätverkslagret (lager 3). TCP tillhör transportlagret (lager 4). De är på olika lager." },
+          { t:"Portnummer kan vara upp till 2⁴⁸, annars skulle de snabbt ta slut på internet.", a:false, e:"FALSKT. Portnummer är 16-bitars heltal med maxvärde 65 535 (2¹⁶ − 1), inte 2⁴⁸." },
+        ]
+      }
+    ]
+  },
+  2023: {
+    label: "2023 (13 mars)",
+    sections: [
+      {
+        name: "Uppgift 4 – TCP/UDP",
+        penalty: -1,
+        questions: [
+          { t:"En UDP-header innehåller ett sekvensnummer.", a:false, e:"FALSKT. UDP-headern innehåller source port, destination port, length och checksum. Inget sekvensnummer." },
+          { t:"En TCP-header innehåller ett fält som anger numret på den första byten i paketet.", a:true, e:"SANT. TCP-headerns sequence number anger numret på den första byten i segmentets datadel." },
+          { t:"Varje program som använder internet har ett portnummer som är unikt i datorn där programmet körs.", a:true, e:"SANT. Portnumret (kombinerat med IP-adressen och protokoll) identifierar unikt en socket på en lokal dator." },
+          { t:"UDP använder en checksumma för att försöka hitta bitfel i ett mottaget paket.", a:true, e:"SANT. UDP-headern innehåller en checksumma som mottagaren kan använda för att detektera bitfel." },
+          { t:"Om en time-out utlöses i UDP så halveras congestion window.", a:false, e:"FALSKT. UDP har ingen congestion control och använder inte congestion window. Det är ett TCP-begrepp." },
+          { t:"QUIC använder UDP.", a:true, e:"SANT. QUIC körs ovanpå UDP och kombinerar fördelar från TCP och TLS med lägre uppkopplingslatens." },
+          { t:"I ett ACK-paket i TCP anges numret på nästa byte som mottagaren förväntar sig att få.", a:true, e:"SANT. TCP:s ACK-nummer är kumulativt och anger numret på nästa förväntade byte." },
+          { t:"Värdet på time-out i en TCP-förbindelse är alltid 2 millisekunder multiplicerat med antal routrar paketen måste passera i TCP-förbindelsen.", a:false, e:"FALSKT. TCP beräknar timeout dynamiskt baserat på RTT-mätningar. Inget fast formel med antal routrar används." },
+          { t:"TCP och UDP tillhör nätverkslagret.", a:false, e:"FALSKT. TCP och UDP tillhör transportlagret (lager 4). Nätverkslagret (lager 3) innehåller IP." },
+          { t:"Portnummer används av IP-protokollet för att leverera data i ett paket till rätt program.", a:false, e:"FALSKT. IP-protokollet (nätverkslagret) levererar paket till rätt dator via IP-adresser. Det är transportlagret (TCP/UDP) som använder portnummer för att leverera data till rätt program." },
+        ]
+      }
+    ]
+  },
+  2024: {
+    label: "2024 (14 mars)",
+    sections: [
+      {
+        name: "Uppgift 3 – TCP/UDP",
+        penalty: -1,
+        questions: [
+          { t:"Headern i ett UDP-paket innehåller en checksumma.", a:true, e:"SANT. UDP-headern innehåller ett 16-bitars checksummafält." },
+          { t:"Ett TCP-pakets header har ett fält som anger numret på den första byten i paketet.", a:true, e:"SANT. TCP-headerns sequence number anger numret på den första byten i segmentets data." },
+          { t:"Ett program som kommunicerar över internet har ett portnummer som är unikt på internet.", a:false, e:"FALSKT. Portnumret är unikt på den lokala datorn, inte på hela internet." },
+          { t:"TCP-paket är alltid längre än UDP-paket.", a:false, e:"FALSKT. Paketstorlek beror på mängden data. En jämförelse av headerstorlekar räcker inte." },
+          { t:"Om en time-out utlöses i TCP så fördubblas congestion window.", a:false, e:"FALSKT. Vid time-out sätts congestion window till 1 MSS och slow start initieras om. Det är en drastisk minskning." },
+          { t:"DNS använder UDP.", a:true, e:"SANT. DNS använder primärt UDP (port 53) för frågor och svar." },
+          { t:"I ett ACK-paket i UDP anges numret på nästa byte som sändaren av ACK-paketet vill ha.", a:false, e:"FALSKT. UDP har inga ACK-paket. UDP-headern saknar ACK-fält." },
+          { t:"Värdet på time-out i en TCP-förbindelse är alltid 1,25 ms multiplicerat med antal routrar paketen måste passera i förbindelsen.", a:false, e:"FALSKT. TCP beräknar timeout dynamiskt baserat på RTT. Inget fast formel med antal routrar." },
+          { t:"TCP och UDP är två protokoll som tillhör nätverkslagret.", a:false, e:"FALSKT. TCP och UDP tillhör transportlagret. Nätverkslagret innehåller IP." },
+          { t:"Portnummer kan vara hur stora som helst, annars skulle de snabbt ta slut på internet.", a:false, e:"FALSKT. Portnummer är 16-bitars heltal med maxvärde 65 535 (2¹⁶ − 1)." },
+        ]
+      },
+      {
+        name: "Uppgift 4 – Ethernet/länklagret",
+        penalty: -1,
+        questions: [
+          { t:"En paritetsbit upptäcker aldrig ett udda antal bitfel.", a:false, e:"FALSKT. En paritetsbit ALLTID ett udda antal bitfel (1, 3, 5,...). Påståendet är rakt motsatt till sanningen." },
+          { t:"Ethernet använder slotted aloha.", a:false, e:"FALSKT. Ethernet använder CSMA/CD, inte slotted aloha." },
+          { t:"Ethernet kontrollerar om ett mottaget Ethernet-paket är korrekt.", a:true, e:"SANT. Ethernet använder CRC-32 för feldetektering. Felaktiga ramar kastas tyst." },
+          { t:"En dator kan ha mer än en MAC-adress.", a:true, e:"SANT. En dator med flera nätverksgränssnitt har en MAC-adress per gränssnitt." },
+          { t:"En ARP-server delar ut MAC-adresser till datorerna på ett subnät.", a:false, e:"FALSKT. Det finns ingen 'ARP-server'. ARP är ett distribuerat broadcast-protokoll." },
+          { t:"I token ring får en sändare börja sända när som helst.", a:false, e:"FALSKT. I Token Ring måste en nod alltid vänta tills den fått token innan den får sända." },
+          { t:"Ethernet-paketen innehåller inte sändarens MAC-adress.", a:false, e:"FALSKT. Varje Ethernet-ram innehåller ett source MAC-adressfält med sändarens adress." },
+          { t:"En Ethernet-switch som tar emot ett Ethernet-paket med en destinationsadress som inte finns i dess tabell kastar Ethernet-paketet för då finns inte mottagaren i subnätet.", a:false, e:"FALSKT. En switch som inte känner till destinationsadressen skickar paketet på ALLA portar utom inkommande (flooding). Paketet kastas inte." },
+          { t:"ARP-protokollet kan användas för att hitta Ethernet-adressen till vilken dator som helst på internet bara man har datorns IP-adress.", a:false, e:"FALSKT. ARP fungerar bara inom samma subnät. ARP-förfrågningar är broadcasts och broadcasts passerar inte routrar." },
+          { t:"Om Ethernet används så kontrollerar alltid en dator om någon annan använder kanalen innan den börjar sända ett Ethernet-paket.", a:true, e:"SANT. CSMA/CD innebär Carrier Sense – noden lyssnar alltid på kanalen innan sändning." },
+        ]
+      }
+    ]
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// PRACTICE BANK (44 questions, for random mode)
+// ═══════════════════════════════════════════════════════════════
+const BANK = [
+  { s:"TCP och UDP", t:"UDP-headern innehåller inte något sekvensnummer.", a:true, e:"SANT. Till skillnad från TCP saknar UDP sekvensnummer – det är ett connectionless protokoll utan ordningsgaranti." },
+  { s:"TCP och UDP", t:"Ett TCP-segments header innehåller ett fält som anger numret på den första byten i segmentets data.", a:true, e:"SANT. TCP-headerns sequence number anger numret på den första byten i segmentets datadel." },
+  { s:"TCP och UDP", t:"UDP-headern innehåller inte en checksumma.", a:false, e:"FALSKT. UDP-headern innehåller en checksumma som täcker header, data och ett pseudo-header." },
+  { s:"TCP och UDP", t:"Ett program som kommunicerar över internet har ett portnummer som är unikt på hela internet.", a:false, e:"FALSKT. Portnumret är unikt på den lokala datorn. Samma portnummer kan användas av program på olika datorer." },
+  { s:"TCP och UDP", t:"TCP-paket är alltid längre än UDP-paket.", a:false, e:"FALSKT. Paketstorlek beror på datamängd. TCP-headern är visserligen större men det säger ingenting om hela paketets storlek." },
+  { s:"TCP och UDP", t:"Om en time-out utlöses i TCP halveras congestion window.", a:false, e:"FALSKT. Vid time-out sätts congestion window till 1 MSS och slow start initieras om. Det är vid duplicerade ACK som det halveras." },
+  { s:"TCP och UDP", t:"DNS använder huvudsakligen UDP.", a:true, e:"SANT. DNS använder normalt UDP (port 53). TCP används bara vid zonöverföringar eller stora svar." },
+  { s:"TCP och UDP", t:"I ett ACK-paket i TCP anges numret på nästa byte som mottagaren förväntar sig att få.", a:true, e:"SANT. TCP:s ACK-nummer anger numret på nästa förväntade byte – alla bytes före bekräftas kumulativt." },
+  { s:"TCP och UDP", t:"Värdet på time-out i en TCP-förbindelse är alltid konstant under hela förbindelsens livslängd.", a:false, e:"FALSKT. Timeout i TCP beräknas dynamiskt baserat på löpande RTT-mätningar och uppdateras kontinuerligt." },
+  { s:"TCP och UDP", t:"TCP och UDP tillhör transportlagret i internets protokollstack.", a:true, e:"SANT. Både TCP och UDP är transportlagerprotokoll (lager 4), inte nätverkslager eller länklager." },
+  { s:"TCP och UDP", t:"QUIC är ett protokoll som körs ovanpå TCP.", a:false, e:"FALSKT. QUIC körs ovanpå UDP, inte TCP. Det kombinerar fördelar från TCP och TLS med lägre latens." },
+  { s:"TCP och UDP", t:"UDP ser till att data som inte kommit fram till mottagaren sänds om automatiskt.", a:false, e:"FALSKT. UDP är en best-effort-tjänst utan omsändning – applikationen måste hantera det om det behövs." },
+  { s:"TCP och UDP", t:"TCP använder kumulativa ACK.", a:true, e:"SANT. TCP:s ACK-nummer bekräftar kumulativt alla bytes upp till (men inte inklusive) det angivna numret." },
+  { s:"TCP och UDP", t:"I ett ACK-paket i UDP anges numret på nästa byte som mottagaren förväntar sig att få.", a:false, e:"FALSKT. UDP har inga ACK-paket. UDP-headern saknar sekvensnummer och ACK-fält." },
+  { s:"TCP och UDP", t:"Checksumman i TCP-headern måste räknas om varje gång ett TCP-segment passerar en router.", a:false, e:"FALSKT. TCP-checksumman räknas INTE om i routrar. Det är IP-headerns checksumma som räknas om (pga. TTL-minskning)." },
+  { s:"TCP och UDP", t:"Om en server tar emot ett ACK-paket med ACK-nummer 500 innebär det att klienten korrekt tagit emot alla bytes upp till och med byte 499.", a:true, e:"SANT. ACK-nummer 500 innebär att nästa förväntade byte är 500, vilket bekräftar att byte 1–499 är korrekt mottagna." },
+  { s:"TCP och UDP", t:"Om en server får ett ACK med Receive Window = 4096 bytes får servern skicka hur mycket data som helst tills ett nytt ACK anländer.", a:false, e:"FALSKT. Receive Window begränsar hur mycket obekräftad data som får finnas 'i luften'. Servern får inte överskrida den gränsen." },
+  { s:"TCP och UDP", t:"Portnummer i TCP och UDP kan vara upp till 65 535.", a:true, e:"SANT. Portnummer är 16-bitars heltal vilket ger värden från 0 till 65 535 (2¹⁶ − 1)." },
+  { s:"TCP och UDP", t:"TCP och UDP tillhör nätverkslagret.", a:false, e:"FALSKT. TCP och UDP tillhör transportlagret (lager 4). Nätverkslagret (lager 3) innehåller IP." },
+  { s:"TCP och UDP", t:"Värdet på time-out i en TCP-förbindelse baseras på mätningar av round-trip-time.", a:true, e:"SANT. TCP mäter RTT löpande och beräknar timeout som EstimatedRTT + 4×DevRTT." },
+  { s:"TCP och UDP", t:"DNS använder enbart TCP.", a:false, e:"FALSKT. DNS använder primärt UDP. TCP används bara vid zonöverföringar eller när svaret är för stort." },
+  { s:"TCP och UDP", t:"Om en time-out utlöses i UDP halveras congestion window.", a:false, e:"FALSKT. UDP har ingen congestion control och ingen congestion window. Det är ett TCP-begrepp." },
+  { s:"Ethernet och länklagret", t:"Ethernet använder ett token för att avgöra vilken dator som får sända.", a:false, e:"FALSKT. Token Ring använder ett token. Ethernet använder CSMA/CD." },
+  { s:"Ethernet och länklagret", t:"Ett Ethernet-paket innehåller alltid både sändarens och mottagarens MAC-adress.", a:true, e:"SANT. Varje Ethernet-ram innehåller ett destination MAC-fält och ett source MAC-fält." },
+  { s:"Ethernet och länklagret", t:"En dators nätverkskort får sin MAC-adress tilldelad av en server varje gång det ansluts till ett nätverk.", a:false, e:"FALSKT. MAC-adressen är hårdkodad i nätverkskortet av tillverkaren. DHCP delar ut IP-adresser, inte MAC-adresser." },
+  { s:"Ethernet och länklagret", t:"En dator kan ha fler än en MAC-adress.", a:true, e:"SANT. En dator med flera nätverksgränssnitt har en unik MAC-adress per gränssnitt." },
+  { s:"Ethernet och länklagret", t:"En paritetsbit i ett paket upptäcker alltid ett udda antal bitfel.", a:true, e:"SANT. En paritetsbit detekterar alltid ett udda antal bitfel (1, 3, 5,...) men missar jämna antal." },
+  { s:"Ethernet och länklagret", t:"En Ethernet-switch som tar emot ett paket med en destinationsadress som inte finns i dess tabell kastar paketet.", a:false, e:"FALSKT. Switchen skickar ut paketet på ALLA portar utom inkommande (flooding). Paketet kastas inte." },
+  { s:"Ethernet och länklagret", t:"ARP-protokollet kan användas för att ta reda på MAC-adressen till en dator på ett annat subnät om man känner till dess IP-adress.", a:false, e:"FALSKT. ARP fungerar bara inom samma subnät. ARP-förfrågningar är broadcasts och broadcasts passerar inte routrar." },
+  { s:"Ethernet och länklagret", t:"I slotted aloha startar alla sändningar alltid i början av en tidslucka (slot).", a:true, e:"SANT. Det är definitionen av slotted aloha – alla noder synkroniseras och sändning börjar alltid i början av en slot." },
+  { s:"Ethernet och länklagret", t:"En Ethernet-ram kan vara hur stor som helst.", a:false, e:"FALSKT. Standard Ethernet-ramar har en maxstorlek på 1518 bytes. Det finns alltid ett övre tak." },
+  { s:"Ethernet och länklagret", t:"Om Ethernet används kontrollerar alltid en dator om kanalen är ledig innan den börjar sända.", a:true, e:"SANT. CSMA/CD innebär att noden alltid lyssnar (Carrier Sense) innan sändning." },
+  { s:"Ethernet och länklagret", t:"Ethernet använder slotted aloha som åtkomstmetod.", a:false, e:"FALSKT. Ethernet använder CSMA/CD, inte slotted aloha." },
+  { s:"Ethernet och länklagret", t:"En paritetsbit i ett paket kan aldrig upptäcka om exakt två bitar har ändrats.", a:true, e:"SANT. Två är ett jämnt tal. Om exakt två bitar ändras förblir pariteten densamma – felet är oupptäckt." },
+  { s:"Ethernet och länklagret", t:"Ethernet kontrollerar om en mottagen ram är korrekt med hjälp av CRC.", a:true, e:"SANT. Ethernet använder CRC-32 i ramens trailer för feldetektering. Felaktiga ramar kastas tyst." },
+  { s:"Ethernet och länklagret", t:"En mottagare i Ethernet skickar ett NACK-paket till sändaren om den kastar ett felaktigt paket.", a:false, e:"FALSKT. Ethernet skickar inget NACK. Felaktiga ramar kastas tyst utan notifiering till sändaren." },
+  { s:"Ethernet och länklagret", t:"Om bara en sändare i ett token ring-nät har ett paket att sända kan den alltid sända paketet omedelbart.", a:false, e:"FALSKT. I Token Ring måste en nod alltid vänta tills den fått token, även om den är ensam om att ha data." },
+  { s:"Ethernet och länklagret", t:"En ARP-server delar ut MAC-adresser till datorerna på ett subnät.", a:false, e:"FALSKT. Det finns ingen 'ARP-server'. ARP är distribuerat – en dator skickar broadcast och den sökta datorn svarar." },
+  { s:"Ethernet och länklagret", t:"I token ring får en sändare börja sända när som helst.", a:false, e:"FALSKT. I Token Ring måste en nod alltid vänta tills den fått token innan den får sända." },
+  { s:"Ethernet och länklagret", t:"UDP och Ethernet använder exakt samma typ av checksumma.", a:false, e:"FALSKT. UDP använder one's complement-checksumma. Ethernet använder CRC-32. De är helt olika." },
+  { s:"Ethernet och länklagret", t:"Ett Ethernet-paket kan innehålla ett IP-paket som payload.", a:true, e:"SANT. Ethernet-ramen transporterar IP-paket som data (payload). Det är hur nätverkslagerinkapsling fungerar." },
+  { s:"Ethernet och länklagret", t:"Om ett IP-paket inte kommer fram till sin slutdestination sänds det alltid om automatiskt.", a:false, e:"FALSKT. IP är ett best-effort-protokoll. Routrar sänder inte om försvunna paket – det är TCP:s uppgift." },
+  { s:"Ethernet och länklagret", t:"Om CSMA används kan man vara helt säker på att två sändare aldrig stör varandra.", a:false, e:"FALSKT. CSMA kan inte garantera kollisionsfrihet pga. propagationsfördröjning – två noder kan uppfatta kanalen som ledig samtidigt." },
+  { s:"Ethernet och länklagret", t:"Antalet datorer som maximalt kan finnas i ett subnät är alltid ett jämnt tal.", a:true, e:"SANT. Antalet användbara hostar = 2ⁿ − 2 (nätadress + broadcast reserveras). 2ⁿ − 2 är alltid jämnt för n ≥ 1." },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let currentMode = null;   // 'practice' | year number
+let activeQuestions = []; // flat array of question objects with .section attached
+let userAnswers = {};
+let submitted = false;
+let practiceRound = 0;
+
+// ═══════════════════════════════════════════════════════════════
+// NAV / PAGES
+// ═══════════════════════════════════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (id === 'home')    document.querySelector('.nav-tab:nth-child(1)').classList.add('active');
+  if (id === 'history') document.querySelector('.history-tab').classList.add('active');
+  if (id === 'history') renderHistory();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HOME — build year cards
+// ═══════════════════════════════════════════════════════════════
+function buildHomeCards() {
+  const grid = document.getElementById('year-cards');
+  grid.innerHTML = '';
+  const yearColors = { 2015:'#4fc3f7', 2020:'#81c784', 2021:'#ffa726', 2022:'#ce93d8', 2023:'#4fc3f7', 2024:'#81c784' };
+  Object.entries(YEAR_EXAMS).forEach(([yr, exam]) => {
+    const totalQ = exam.sections.reduce((s, sec) => s + sec.questions.length, 0);
+    const color = yearColors[yr] || 'var(--accent)';
+    const div = document.createElement('div');
+    div.className = 'mode-card year-card';
+    div.style.setProperty('--yc', color);
+    div.innerHTML = `
+      <div class="card-badge" style="background:transparent;border-color:${color};color:${color}">${totalQ} frågor</div>
+      <div class="card-year" style="color:${color}">Tentamen</div>
+      <div class="card-title">${exam.label}</div>
+      <div class="card-sub">${exam.sections.map(s => s.name).join(' · ')}</div>
+    `;
+    div.onclick = () => startYearExam(parseInt(yr));
+    grid.appendChild(div);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// START MODES
+// ═══════════════════════════════════════════════════════════════
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function startPractice() {
+  practiceRound++;
+  currentMode = 'practice';
+  const tcp = shuffle(BANK.filter(q => q.s === 'TCP och UDP')).slice(0,10);
+  const eth = shuffle(BANK.filter(q => q.s === 'Ethernet och länklagret')).slice(0,10);
+  activeQuestions = [...tcp,...eth].map(q => ({...q, section: q.s}));
+  initQuiz(
+    `Slumpmässig övning – Omgång ${practiceRound}`,
+    '20 frågor (10 TCP/UDP + 10 Ethernet)',
+    [
+      {label:'Omgång', val: practiceRound, hi:true},
+      {label:'Frågebank', val:'44 frågor'},
+      {label:'Poängsättning', val:'+1 / −1 / 0'},
+    ]
+  );
+}
+
+function startYearExam(yr) {
+  currentMode = yr;
+  const exam = YEAR_EXAMS[yr];
+  activeQuestions = [];
+  exam.sections.forEach(sec => {
+    sec.questions.forEach(q => activeQuestions.push({...q, section: sec.name, penalty: sec.penalty}));
+  });
+  const totalQ = activeQuestions.length;
+  initQuiz(
+    `Tentamen ${exam.label}`,
+    exam.sections.map(s=>`${s.name} (${s.questions.length} frågor)`).join(' · '),
+    [
+      {label:'År', val: yr, hi:true},
+      {label:'Frågor', val: totalQ},
+      {label:'Poängsättning', val:'+1 / −1 / 0'},
+    ]
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT / RENDER QUIZ
+// ═══════════════════════════════════════════════════════════════
+function initQuiz(title, sub, metaItems) {
+  userAnswers = {};
+  submitted = false;
+
+  document.getElementById('quiz-title').textContent = title;
+  document.getElementById('quiz-sub').textContent = sub;
+
+  const metaBar = document.getElementById('quiz-meta');
+  metaBar.innerHTML = metaItems.map(m =>
+    `<div class="meta-badge${m.hi?' hi':''}">${m.label}: ${m.val}</div>`
+  ).join('');
+
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('progressBar').style.background = 'var(--accent)';
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('resultPanel').classList.remove('show');
+
+  renderQuestions();
+  showPage('quiz');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function renderQuestions() {
+  const container = document.getElementById('quiz-container');
+  container.innerHTML = '';
+  let lastSection = '';
+
+  activeQuestions.forEach((q, i) => {
+    if (q.section !== lastSection) {
+      lastSection = q.section;
+      const div = document.createElement('div');
+      div.className = 'section-divider';
+      div.textContent = q.section;
+      container.appendChild(div);
+    }
+    const card = document.createElement('div');
+    card.className = 'q-card';
+    card.id = `card-${i}`;
+    card.innerHTML = `
+      <div class="q-num">FRÅGA ${i+1} / ${activeQuestions.length}</div>
+      <div class="q-text">${q.t}</div>
+      <div class="btn-group">
+        <button class="tf-btn" id="bs-${i}" onclick="pick(${i},true)">✓ Sant</button>
+        <button class="tf-btn" id="bf-${i}" onclick="pick(${i},false)">✗ Falskt</button>
+      </div>
+      <div class="feedback" id="fb-${i}"></div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function pick(i, val) {
+  if (submitted) return;
+  userAnswers[i] = val;
+  document.getElementById(`bs-${i}`).className = 'tf-btn' + (val===true  ? ' sel-sant'   : '');
+  document.getElementById(`bf-${i}`).className = 'tf-btn' + (val===false ? ' sel-falskt' : '');
+  const done = Object.keys(userAnswers).length;
+  document.getElementById('progressBar').style.width = (done / activeQuestions.length * 100) + '%';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SUBMIT
+// ═══════════════════════════════════════════════════════════════
+function submitQuiz() {
+  submitted = true;
+  document.getElementById('submitBtn').disabled = true;
+  let correct=0, wrong=0, skipped=0;
+  const qResults = [];
+
+  activeQuestions.forEach((q, i) => {
+    const card = document.getElementById(`card-${i}`);
+    const fb   = document.getElementById(`fb-${i}`);
+    document.getElementById(`bs-${i}`).disabled = true;
+    document.getElementById(`bf-${i}`).disabled = true;
+    const correctLabel = q.a ? 'SANT' : 'FALSKT';
+    let status;
+
+    if (userAnswers[i] === undefined) {
+      skipped++; status='skip';
+      card.classList.add('skipped');
+      fb.className = 'feedback fb-skipped show';
+      fb.textContent = `— Ej besvarad. Rätt svar: ${correctLabel}. ${q.e}`;
+    } else if (userAnswers[i] === q.a) {
+      correct++; status='correct';
+      card.classList.add('correct');
+      fb.className = 'feedback fb-correct show';
+      fb.textContent = `✓ Rätt! ${q.e}`;
+    } else {
+      wrong++; status='wrong';
+      card.classList.add('wrong');
+      fb.className = 'feedback fb-wrong show';
+      fb.textContent = `✗ Fel. Rätt svar: ${correctLabel}. ${q.e}`;
+    }
+    qResults.push({ text: q.t, answer: q.a, userAnswer: userAnswers[i], status });
+  });
+
+  const rawScore   = correct - wrong;
+  const finalScore = Math.max(0, rawScore);
+
+  document.getElementById('tC').textContent = correct;
+  document.getElementById('tW').textContent = wrong;
+  document.getElementById('tS').textContent = skipped;
+
+  const sn = document.getElementById('scoreNum');
+  sn.textContent = `${finalScore} / ${activeQuestions.length}`;
+  sn.className = 'score-num ' + (finalScore >= Math.ceil(activeQuestions.length*0.8) ? 'good' : finalScore >= Math.ceil(activeQuestions.length*0.5) ? 'ok' : 'bad');
+
+  document.getElementById('scoreSub').textContent = `Råpoäng: ${rawScore} → Slutpoäng: ${finalScore} (negativ summa → 0)`;
+
+  const pct = finalScore / activeQuestions.length;
+  const msgs = [
+    [1.0, 'Perfekt! Full koll på alla påståenden.'],
+    [0.8, 'Mycket bra! Du behärskar ämnet väl.'],
+    [0.6, 'Bra jobbat! Granska de röda korten och leta efter mönster i dina misstag.'],
+    [0.4, 'Du är på rätt spår – fokusera på de avsnitt där du tappade poäng.'],
+    [0,   'Inte riktigt där än – men det är precis vad övning är till för!']
+  ];
+  document.getElementById('resultMsg').textContent = msgs.find(([t]) => pct >= t)[1];
+
+  document.getElementById('progressBar').style.width = '100%';
+  document.getElementById('progressBar').style.background = pct >= 0.7 ? 'var(--accent2)' : 'var(--yellow)';
+
+  // Result buttons
+  const btns = document.getElementById('resultBtns');
+  btns.innerHTML = '';
+  if (currentMode === 'practice') {
+    btns.innerHTML = `
+      <button class="r-btn" onclick="startPractice()">↻ Ny omgång (nya frågor)</button>
+      <button class="r-btn sec" onclick="repeatCurrent()">↩ Försök igen (samma)</button>
+    `;
+  } else {
+    btns.innerHTML = `
+      <button class="r-btn" onclick="repeatCurrent()">↩ Försök igen</button>
+      <button class="r-btn sec" onclick="showPage('home')">← Tillbaka</button>
+    `;
+  }
+
+  document.getElementById('resultPanel').classList.add('show');
+  document.getElementById('resultPanel').scrollIntoView({behavior:'smooth', block:'start'});
+
+  // Save to history
+  saveResult({
+    mode: currentMode === 'practice' ? `Övning – Omgång ${practiceRound}` : `Tentamen ${YEAR_EXAMS[currentMode].label}`,
+    modeKey: currentMode,
+    date: new Date().toISOString(),
+    total: activeQuestions.length,
+    correct, wrong, skipped,
+    rawScore, finalScore,
+    questions: qResults
+  });
+}
+
+function repeatCurrent() {
+  const mode = currentMode;
+  if (mode === 'practice') {
+    // same questions, reset answers
+    userAnswers = {}; submitted = false;
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('resultPanel').classList.remove('show');
+    document.getElementById('progressBar').style.width = '0%';
+    document.getElementById('progressBar').style.background = 'var(--accent)';
+    renderQuestions();
+    window.scrollTo({top:0, behavior:'smooth'});
+  } else {
+    startYearExam(mode);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HISTORY — localStorage
+// ═══════════════════════════════════════════════════════════════
+function saveResult(result) {
+  const key = 'eita60_history';
+  let hist = [];
+  try { hist = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e){}
+  hist.unshift(result);
+  if (hist.length > 100) hist = hist.slice(0,100);
+  try { localStorage.setItem(key, JSON.stringify(hist)); } catch(e){}
+}
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem('eita60_history') || '[]'); } catch(e){ return []; }
+}
+
+function clearHistory() {
+  if (!confirm('Radera all historik?')) return;
+  localStorage.removeItem('eita60_history');
+  renderHistory();
+}
+
+function renderHistory() {
+  const hist = loadHistory();
+  const wrap = document.getElementById('history-content');
+  if (!hist.length) {
+    wrap.innerHTML = `<div class="history-empty"><div class="big">📊</div>Ingen historik än. Gör ett quiz för att se dina resultat här!</div>`;
+    return;
+  }
+
+  // Filters
+  const modes = ['Alla', ...new Set(hist.map(h => h.modeKey === 'practice' ? 'Övning' : `${h.modeKey}`))];
+  let activeFilter = 'Alla';
+
+  function doRender(filter) {
+    const filtered = filter === 'Alla' ? hist :
+      filter === 'Övning' ? hist.filter(h => h.modeKey === 'practice') :
+      hist.filter(h => String(h.modeKey) === filter);
+
+    wrap.innerHTML = `
+      <div style="display:flex;align-items:center;margin-bottom:1.2rem;">
+        <div class="hist-filters" style="flex:1">
+          ${modes.map(m => `<button class="hist-filter${m===filter?' active':''}" onclick="renderHistoryFilter('${m}')">${m}</button>`).join('')}
+        </div>
+        <button class="clear-hist" onclick="clearHistory()">Rensa allt</button>
+      </div>
+      ${filtered.map((r, idx) => {
+        const pct = r.finalScore / r.total;
+        const pillClass = pct >= 0.8 ? 'pill-good' : pct >= 0.5 ? 'pill-ok' : 'pill-bad';
+        const d = new Date(r.date);
+        const dateStr = d.toLocaleDateString('sv-SE', {year:'numeric',month:'short',day:'numeric'}) + ' ' + d.toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'});
+        return `
+          <div class="hist-entry" id="he-${idx}">
+            <div class="hist-entry-header" onclick="toggleEntry(${idx})">
+              <div class="hist-score-pill ${pillClass}">${r.finalScore}/${r.total}</div>
+              <div class="hist-meta">
+                <div class="hist-mode">${r.mode}</div>
+                <div class="hist-date">${dateStr}</div>
+              </div>
+              <div class="hist-tally">
+                <span class="t-ok">✓${r.correct}</span> &nbsp;
+                <span class="t-no">✗${r.wrong}</span> &nbsp;
+                <span>—${r.skipped}</span>
+              </div>
+              <div class="hist-chevron">▼</div>
+            </div>
+            <div class="hist-detail">
+              ${r.questions.map((q, qi) => {
+                const icon = q.status==='correct' ? '✓' : q.status==='wrong' ? '✗' : '—';
+                const iconClass = q.status==='correct' ? 'ans-ok' : q.status==='wrong' ? 'ans-no' : 'ans-skip';
+                const userAns = q.userAnswer === undefined ? 'Ej svar' : q.userAnswer ? 'Sant' : 'Falskt';
+                const correctAns = q.answer ? 'Sant' : 'Falskt';
+                return `<div class="hist-q-row">
+                  <div class="hist-q-icon ${iconClass}">${icon}</div>
+                  <div class="hist-q-text">${q.text}</div>
+                  <div class="hist-q-ans ${iconClass}">${userAns}${q.status!=='correct'?` (${correctAns})`:''}</div>
+                </div>`;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).join('')}
+    `;
+  }
+
+  window.renderHistoryFilter = (f) => { activeFilter = f; doRender(f); };
+  doRender('Alla');
+}
+
+window.toggleEntry = (idx) => {
+  document.getElementById(`he-${idx}`).classList.toggle('open');
+};
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+buildHomeCards();
+</script>
 </body>
 </html>
